@@ -34,7 +34,6 @@ try {
     // Load & Log New Grid
     gridNew = cube.loadGrid(gdForm, false)
     logGrid(gridNew)
-    gridNew.close()
     
     println ""
     
@@ -46,10 +45,11 @@ try {
     // Load & Log New Grid
     gridNew = cube.loadGrid(gdForm, false)
     logGrid(gridNew)
-    gridNew.close()
     
 } catch (Exception e) {
 	println e
+} finally {
+	gridNew.close()
 }
 
 logTimer(startTime, "Data Grid Def Examples")
