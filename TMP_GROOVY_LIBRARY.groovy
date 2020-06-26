@@ -173,12 +173,12 @@ Map<String,Map<String,List<String>>> getEditedMbrMap (DataGrid grid, boolean log
 
 DataGridDefinition getGridDefFromMap(Map<String,Map<String,List<String>>> gridMap, log=false, Map<String,Boolean> suppress=[:], Cube cube=rule.getCube()){
 	/**
-	* Will build a DataGridDefinition from a supplied map of type Map<String,Map<String,List<String>>>
-	*	where the top map keys are "pov", "cols", "rows"
+	* Will build a DataGridDefinition from a supplied map of type {@code Map<String,Map<String,List<String>>>}
+	*	where the root map keys are {@code [pov,cols,rows]}
 	* @param gridMap : a map object that defines the pov, cols, and rows
 	* @param log : will log the results to job console
 	* @param cube : a the cube to build the grid definition from
-	* @param suppress : Suppression Options as {@code Map<String,Boolean>}, options are : [suppCols,suppRows,suppRowsNative,suppBlocks]
+	* @param suppress : Suppression Options as {@code Map<String,Boolean>}, keys are : {@code [suppCols,suppRows,suppRowsNative,suppBlocks]}
 	* @return : a grid definition to be used to build the grid
 	*/
 
