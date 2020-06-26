@@ -27,13 +27,13 @@ try {
 	logPrettyMap(mapMapMapList)
 
 	println ""
-    
+
 	println "Log a 4 Deep Nested Map with a List"
 	Map<String,Map<String,Map<String,Map<String,List<String>>>>> mapMapMapMapList = [:]
 	mapMapMapMapList["MapOne-One"] = mapMapMapList
-    mapMapMapMapList["MapOne-Two"] = mapMapMapList
+	mapMapMapMapList["MapOne-Two"] = mapMapMapList
 	mapMapMapMapList["MapTwo-One"] = mapMapMapList
-    mapMapMapMapList["MapTwo-Two"] = mapMapMapList
+	mapMapMapMapList["MapTwo-Two"] = mapMapMapList
 	logPrettyMap(mapMapMapMapList)
 
 	println ""
@@ -44,7 +44,7 @@ try {
 	lstMapMapList << mapMapList
 	logPrettyMap(lstMapMapList)
 
-    
+
 } catch (Exception e) {
 	println e
 }
