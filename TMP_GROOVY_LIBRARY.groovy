@@ -178,7 +178,7 @@ DataGridDefinition getGridDefFromMap(Map<String,Map<String,List<String>>> gridMa
 	* @param gridMap : a map object that defines the pov, cols, and rows
 	* @param log : will log the results to job console
 	* @param cube : a the cube to build the grid definition from
-	* @param suppress : Suppression Options as @code(Map<String,Boolean>), options are : [suppCols,suppRows,suppRowsNative,suppBlocks]
+	* @param suppress : Suppression Options as {Map<String,Boolean>}, options are : [suppCols,suppRows,suppRowsNative,suppBlocks]
 	* @return : a grid definition to be used to build the grid
 	*/
 
