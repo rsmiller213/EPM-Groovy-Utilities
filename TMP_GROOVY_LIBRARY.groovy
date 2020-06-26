@@ -4,7 +4,7 @@
 *
 * **********************************************************/
 class Globals{
-	static Boolean debug = true
+	static Boolean debug = false
 }
 /* **********************************************************
 *
@@ -81,6 +81,68 @@ def logGrid (DataGrid grid) {
 	
 	println '********************** END GRID PRINT **********************'
 	
+}
+
+/*
+def logMap(Map root, int level=0) {
+	if (root instanceof Map) {
+		(Map)root.each{ key, val ->
+			if (val instanceof Map){
+				String spaces = " ".multiply(level * 3)
+				println "$spaces$key : "
+				logMap((Map)val,level+1)
+			} else {
+				String spaces = " ".multiply(level * 3)
+				println "$spaces$key : $val"
+			}
+		}
+	} else if (root instanceof List) {
+    	(List)root.each{ key ->
+        	if (key instanceof Map) {
+            	logMap((Map)key,level+1)
+            } else {
+            	String spaces = " ".multiply(level * 3)
+                println "$spaces$key :  "
+            }
+        }
+    }
+}*/
+
+def logPrettyMap(Map root, int level=0) {
+	/**
+	* Logs a map in a nicely indented, easy-to-read way
+	* @param map : the map object to log
+    * @param level : the level of indenting (for recursive calls)
+	*/
+	root.each{ key, val ->
+		if (val instanceof Map){
+			String spaces = " ".multiply(level * 3)
+			println "$spaces$key : "
+			logPrettyMap((Map)val,level+1)
+		} else {
+			String spaces = " ".multiply(level * 3)
+			println "$spaces$key : $val"
+		}
+	}
+}
+
+def logPrettyMap(List root, int level=0) {
+	/**
+	* Logs a list of maps in a nicely indented, easy-to-read way
+	* @param map : the list of maps object to log
+    * @param level : the level of indenting (for recursive calls)
+	*/
+    int iCnt = -1
+	root.each{ key ->
+		if (key instanceof Map) {
+        	String spaces = " ".multiply(level * 3)
+        	println "$spaces" + "List Element ${iCnt+=1} : "
+			logPrettyMap((Map)key,level+1)
+		} else {
+			String spaces = " ".multiply(level * 3)
+			println "$spaces$key :  "
+		}
+	}
 }
 
 
