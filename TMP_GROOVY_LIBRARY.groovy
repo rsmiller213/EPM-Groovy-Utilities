@@ -188,17 +188,21 @@ DataGridDefinition getGridDefFromMap(Map<String,Map<String,List<String>>> gridMa
     if(!suppress["suppRowsNative"]) {suppress["suppRowsNative"] = false}
     if(!suppress["suppBlocks"]) {suppress["suppBlocks"] = false}
 
-
+    // Create Grid Def Builder
     DataGridDefinitionBuilder bldr = cube.dataGridDefinitionBuilder()
+    // Add Suppression Options
     bldr.setSuppressMissingColumns(suppress["suppCols"])
     bldr.setSuppressMissingRows(suppress["suppRows"])
     bldr.setSuppressMissingRowsNative(suppress["suppRowsNative"])
     bldr.setSuppressMissingBlocks(suppress["suppBlocks"])
+    // Create POV / Columns / Rows
     bldr.addPov(gridMap["pov"].keySet() as List,gridMap["pov"].values() as List)
     bldr.addColumn(gridMap["cols"].keySet() as List,gridMap["cols"].values() as List)
     bldr.addRow(gridMap["rows"].keySet() as List,gridMap["rows"].values() as List)
+    // Build Grid Def
     DataGridDefinition dg = bldr.build()
 
+    // Log to Console
     if (log || Globals.debug) {
         println '********************** BEGIN GRID DEF PRINT **********************'
         println "Logger : $log | Debug : ${Globals.debug}"
@@ -216,6 +220,7 @@ DataGridDefinition getGridDefFromMap(Map<String,Map<String,List<String>>> gridMa
         println '********************** END GRID DEF PRINT **********************'
     }
 
+    // Return Grid Def
     return dg
 }
 DataGridDefinition getGridDefFromMap(Map<String,Map<String,List<String>>> gridMap, Map<String,Boolean> suppress, Cube cube=rule.getCube()){
