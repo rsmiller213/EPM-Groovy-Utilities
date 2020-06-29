@@ -114,12 +114,12 @@ def logPrettyMap(Map root, int level=0){
 
 def logPrettyMap(List root, int level=0){
 	String pfx = " ".multiply(level * 3)
-	 root.eachWithIndex{ item, i ->
-	 	if (item instanceof Map) {
-		  	println "$pfx" + "Item ${i+1}"
-		  	logPrettyMap((Map) item, level+1)
-		  }
-	 }
+    root.eachWithIndex{ item, i ->
+    	if (item instanceof Map) {
+        	println "$pfx" + "Item ${i+1}"
+        	logPrettyMap((Map) item, level+1)
+        }
+    }
 }
 
 
@@ -196,13 +196,7 @@ Map<String,Map<String,List<String>>> getGridMbrMap (DataGrid grid, Boolean log=f
 		println '********************** BEGIN GRID DIM PRINT **********************'
 		println "Logger : $log | Debug : ${Globals.debug}"
 		println 'Unique Cell Members : '
-		["pov","cols","rows"].each { context ->
-			println "   $context : "
-			mapGridMbrs[context].each{ dim, mbr ->
-				println "	  $dim : $mbr"
-			}
-		}
-		//logPrettyMap(mapGridMbrs)
+		logPrettyMap(mapGridMbrs,1)
 		println '********************** END GRID DIM PRINT **********************'
 	}
 
