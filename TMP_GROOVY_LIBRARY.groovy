@@ -99,7 +99,7 @@ def logPrettyMap(Map root, int level=0){
 					logPrettyMap((Map) temp[0], level+1)
 				} else {
 					temp.eachWithIndex{ mapVal, i ->
-						println "$pfx   " + "Item ${i+1} :"
+						println "$pfx   " + "Segment ${i+1} :"
 						logPrettyMap((Map) mapVal, level+2)
 					}
 				}
@@ -110,6 +110,16 @@ def logPrettyMap(Map root, int level=0){
 			println "$pfx" + "$key : $val"
 		}
 	}
+}
+
+def logPrettyMap(List root, int level=0){
+	String pfx = " ".multiply(level * 3)
+    root.eachWithIndex{ item, i ->
+    	if (item instanceof Map) {
+        	println "$pfx" + "Item ${i+1}"
+        	logPrettyMap((Map) item, level+1)
+        }
+    }
 }
 
 
@@ -166,11 +176,11 @@ Map<String,Map<String,List<String>>> getGridMbrMap (DataGrid grid, Boolean log=f
 	
 	// Build  Cell Map
 	grid.dataCellIterator(pred).each{ cell ->
-		["pov","cols","rows"].each { type ->
-			mapGridMbrs[type].each{ dim, mbr ->
-				List<String> lstValue = mapGridMbrs[type].get(dim,[])
+		["pov","cols","rows"].each { context ->
+			mapGridMbrs[context].each{ dim, mbr ->
+				List<String> lstValue = mapGridMbrs[context].get(dim,[])
 				lstValue.add(cell.getMemberName(dim))
-				mapGridMbrs[type][dim] = lstValue.unique()
+				mapGridMbrs[context][dim] = lstValue.unique()
 			}
 		}
 		
@@ -181,9 +191,9 @@ Map<String,Map<String,List<String>>> getGridMbrMap (DataGrid grid, Boolean log=f
 		println '********************** BEGIN GRID DIM PRINT **********************'
 		println "Logger : $log | Debug : ${Globals.debug}"
 		println 'Unique Cell Members : '
-		["pov","cols","rows"].each { type ->
-			println "   $type : "
-			mapGridMbrs[type].each{ dim, mbr ->
+		["pov","cols","rows"].each { context ->
+			println "   $context : "
+			mapGridMbrs[context].each{ dim, mbr ->
 				println "	  $dim : $mbr"
 			}
 		}
