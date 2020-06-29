@@ -114,12 +114,12 @@ def logPrettyMap(Map root, int level=0){
 
 def logPrettyMap(List root, int level=0){
 	String pfx = " ".multiply(level * 3)
-    root.eachWithIndex{ item, i ->
-    	if (item instanceof Map) {
-        	println "$pfx" + "Item ${i+1}"
-        	logPrettyMap((Map) item, level+1)
-        }
-    }
+	 root.eachWithIndex{ item, i ->
+	 	if (item instanceof Map) {
+		  	println "$pfx" + "Item ${i+1}"
+		  	logPrettyMap((Map) item, level+1)
+		  }
+	 }
 }
 
 
@@ -169,7 +169,12 @@ Map<String,Map<String,List<String>>> getGridMbrMap (DataGrid grid, Boolean log=f
 	grid.pov.each { povDims -> mapGridMbrs["pov"][povDims.dimName] = []}
 	// Get the Column Dimensions of the Grid
 	mapGridMbrs["cols"] = [:]
-	grid.columns[0].each{ colDims -> mapGridMbrs["cols"][colDims.dimName] = []}
+	grid.columns.each{ columns -> 
+		columns[0].each{ col ->
+			DataGrid.HeaderCell tempHdr = col as DataGrid.HeaderCell
+			mapGridMbrs["cols"][tempHdr.dimName] = []
+		}
+	}
 	// Get the Row Dimensions of the Grid
 	mapGridMbrs["rows"] = [:]
 	grid.rows[0].headers.each{ rowDims -> mapGridMbrs["rows"][rowDims.dimName] = []}
@@ -197,6 +202,7 @@ Map<String,Map<String,List<String>>> getGridMbrMap (DataGrid grid, Boolean log=f
 				println "	  $dim : $mbr"
 			}
 		}
+		//logPrettyMap(mapGridMbrs)
 		println '********************** END GRID DIM PRINT **********************'
 	}
 
@@ -210,7 +216,7 @@ Map<String,Map<String,List<String>>> getEditedMbrMap (DataGrid grid, boolean log
 }
 
 
-DataGridDefinition getGridDefFromMap(Map<String,Map<String,List<String>>> gridMap, log=false, Map<String,Boolean> suppress=[:], Cube cube=rule.getCube()){
+DataGridDefinition getGridDefFromMap(Map gridMap, log=false, Map<String,Boolean> suppress=[:], Cube cube=rule.getCube()){
 	/**
 	* Will build a DataGridDefinition from a supplied map of type Map<String,Map<String,List<String>>>
 	*	where the root map keys are [pov,cols,rows]
@@ -233,9 +239,34 @@ DataGridDefinition getGridDefFromMap(Map<String,Map<String,List<String>>> gridMa
 	bldr.setSuppressMissingRows(suppress["suppRows"])
 	bldr.setSuppressMissingRowsNative(suppress["suppRowsNative"])
 	bldr.setSuppressMissingBlocks(suppress["suppBlocks"])
-	bldr.addPov(gridMap["pov"].keySet() as List,gridMap["pov"].values() as List)
-	bldr.addColumn(gridMap["cols"].keySet() as List,gridMap["cols"].values() as List)
-	bldr.addRow(gridMap["rows"].keySet() as List,gridMap["rows"].values() as List)
+	// Add POV
+	if (gridMap["pov"] instanceof Map) {
+		bldr.addPov(gridMap["pov"].keySet() as List,gridMap["pov"].values() as List)
+	} else if (gridMap["pov"] instanceof List) {
+		List lstTemp = gridMap["pov"] as List
+		Map mapTemp = lstTemp[0] as Map
+		bldr.addPov(mapTemp.keySet() as List,mapTemp.values() as List)
+	}
+	// Add Cols
+	if (gridMap["cols"] instanceof Map) {
+		bldr.addColumn(gridMap["cols"].keySet() as List,gridMap["cols"].values() as List)
+	} else if (gridMap["cols"] instanceof List) {
+		List lstTemp = gridMap["cols"] as List
+		lstTemp.each { item ->
+			Map mapTemp = item as Map
+			bldr.addColumn(mapTemp.keySet() as List,mapTemp.values() as List)
+		}
+	}
+	// Add Rows
+	if (gridMap["rows"] instanceof Map) {
+		bldr.addRow(gridMap["rows"].keySet() as List,gridMap["rows"].values() as List)
+	} else if (gridMap["rows"] instanceof List) {
+		List lstTemp = gridMap["rows"] as List
+		lstTemp.each { item ->
+			Map mapTemp = item as Map
+			bldr.addRow(mapTemp.keySet() as List, mapTemp.values() as List)
+		}
+	}
 	DataGridDefinition dg = bldr.build()
 
 	if (log || Globals.debug) {
@@ -249,9 +280,14 @@ DataGridDefinition getGridDefFromMap(Map<String,Map<String,List<String>>> gridMa
 		println "POV : "
 		println "   ${dg.pov.getMembers().flatten()}"
 		println "Columns : "
-		println "   ${dg.columns*.getMembers().flatten()}"
+		dg.columns.each{ col ->
+			println "   Segment : ${col.getMembers().flatten()}"
+		}
 		println "Rows : "
-		println "   ${dg.rows*.getMembers().flatten()}"
+		dg.rows.each{ row ->
+			println "   Segment : ${row.getMembers().flatten()}"
+		}
+		//println "   ${dg.rows*.getMembers().flatten()}"
 		println '********************** END GRID DEF PRINT **********************'
 	}
 
