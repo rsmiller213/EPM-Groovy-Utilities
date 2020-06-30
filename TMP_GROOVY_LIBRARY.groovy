@@ -162,16 +162,17 @@ Map<String,List<Map<String,List<String>>>> getGridMbrMap (DataGrid grid, Boolean
 	* @param log : will log the results to job console
 	* @return : a map of dimensions / members requested
 	*/
-	// Build Initial Map Object
+	// Build Initial Map Object // Vars
 	Map<String,List<Map<String,List<String>>>> mapGrid = [:]
 	Map mapTemp = [:]
-    List lstTemp = []
+	List lstTemp = []
+	
 	// Get the POV Dimensions of the Grid
 	mapGrid["pov"] = []
 	grid.pov.each { povDims -> mapTemp[povDims.dimName] = []}
 	mapGrid["pov"] << mapTemp
 	// Get the Column Dimensions of the Grid
-    mapTemp = [:]
+	mapTemp = [:]
 	mapGrid["cols"] = []
 	grid.columns.each{ columns -> 
 		columns[0].each{ col ->
