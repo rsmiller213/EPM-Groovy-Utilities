@@ -155,7 +155,7 @@ Map<String,String> getPOVMap (DataGrid grid, boolean log=false) {
 }
 
 
-Map<String,Map<String,List<String>>> getGridMbrMap (DataGrid grid, Boolean log=false, Predicate pred = {true}) {
+Map<String,List<Map<String,List<String>>>> getGridMbrMap (DataGrid grid, Boolean log=false, Predicate pred = {true}) {
 	/**
 	* Will iterate through a grid and build a map of all the dimensions / members that fit the predicate (filter)
 	* @param grid : a DataGrid object that will be used to grab the edited cells from
@@ -163,32 +163,75 @@ Map<String,Map<String,List<String>>> getGridMbrMap (DataGrid grid, Boolean log=f
 	* @return : a map of dimensions / members requested
 	*/
 	// Build Initial Map Object
-	Map<String,Map<String,List<String>>> mapGridMbrs = [:]
+	Map<String,List<Map<String,List<String>>>> mapGrid = [:]
+	Map mapTemp = [:]
+    List lstTemp = []
 	// Get the POV Dimensions of the Grid
-	mapGridMbrs["pov"] = [:]
-	grid.pov.each { povDims -> mapGridMbrs["pov"][povDims.dimName] = []}
+	mapGrid["pov"] = []
+	grid.pov.each { povDims -> mapTemp[povDims.dimName] = []}
+	mapGrid["pov"] << mapTemp
 	// Get the Column Dimensions of the Grid
-	mapGridMbrs["cols"] = [:]
+    mapTemp = [:]
+	mapGrid["cols"] = []
 	grid.columns.each{ columns -> 
 		columns[0].each{ col ->
 			DataGrid.HeaderCell tempHdr = col as DataGrid.HeaderCell
-			mapGridMbrs["cols"][tempHdr.dimName] = []
+			mapTemp[tempHdr.dimName] = []
 		}
 	}
+	mapGrid["cols"] << mapTemp
 	// Get the Row Dimensions of the Grid
-	mapGridMbrs["rows"] = [:]
-	grid.rows[0].headers.each{ rowDims -> mapGridMbrs["rows"][rowDims.dimName] = []}
-	
+	mapGrid["rows"] = []
+	mapTemp = [:]
+	grid.rows[0].headers.each{ rowDims -> mapTemp[rowDims.dimName] = []}
+	mapGrid["rows"] << mapTemp
 	// Build  Cell Map
 	grid.dataCellIterator(pred).each{ cell ->
-		["pov","cols","rows"].each { context ->
-			mapGridMbrs[context].each{ dim, mbr ->
-				List<String> lstValue = mapGridMbrs[context].get(dim,[])
-				lstValue.add(cell.getMemberName(dim))
-				mapGridMbrs[context][dim] = lstValue.unique()
+		// POV
+		mapGrid["pov"][0].each { dim, mbr ->
+			lstTemp = mapGrid["pov"][0].get(dim,[])
+			lstTemp.add(cell.getMemberName(dim))
+			mapGrid["pov"][0][dim] = lstTemp.unique()
+		}
+		["cols","rows"].each{ context ->
+			Map tempMap = [:]
+			mapGrid[context][0].each {dim, mbr ->
+				// get a map of all the dims/members for the context of this cell
+				tempMap[dim] = cell.getMemberName(dim)
+			}
+			mapGrid[context] << tempMap
+			mapGrid[context] = mapGrid[context].unique()
+			//println "$context : ($iNumOfDims) $tempMap" 
+		}
+	}
+	
+	// Drop initial col / map as it is blank
+	mapGrid["cols"] = mapGrid["cols"].drop(1)
+	mapGrid["rows"] = mapGrid["rows"].drop(1)
+
+	// Split into logical segments by grouping the cols / rows
+	["cols","rows"].each{context ->
+		// Grab list of dimensions in this context
+		List lstDims = mapGrid[context][0].keySet() as List
+		List<Map<String,List<String>>> lstOut = []
+		// Group by all dimensions up to the inner most
+		def result = mapGrid[context].groupBy{ o -> lstDims.dropRight(1).collect{o[it]}}.values()
+
+		result.each { item ->
+			lstOut << item*.keySet().flatten().unique().collectEntries{
+				[(it): item*.get(it).findAll().flatten().unique()]
 			}
 		}
-		
+		// now we have grouped through all but the inner most dimension, regroup again just for the inner most
+		result = lstOut.groupBy{o -> lstDims.takeRight(1).collect{o[it]}}.values()
+		lstOut = []
+		result.each { item ->
+			lstOut << item*.keySet().flatten().unique().collectEntries{
+				[(it): item*.get(it).findAll().flatten().unique()]
+			}
+		}
+		// write it back into the context map
+		mapGrid[context] = lstOut
 	}
 
 	// Write Results to Log
@@ -196,25 +239,25 @@ Map<String,Map<String,List<String>>> getGridMbrMap (DataGrid grid, Boolean log=f
 		println '********************** BEGIN GRID DIM PRINT **********************'
 		println "Logger : $log | Debug : ${Globals.debug}"
 		println 'Unique Cell Members : '
-		logPrettyMap(mapGridMbrs,1)
+		logPrettyMap(mapGrid,1)
 		println '********************** END GRID DIM PRINT **********************'
 	}
 
-	return mapGridMbrs
+	return mapGrid
 }
-Map<String,Map<String,List<String>>> getGridMbrMap (DataGrid grid, Predicate pred) {
+Map<String,List<Map<String,List<String>>>> getGridMbrMap (DataGrid grid, Predicate pred) {
 	return getGridMbrMap(grid,false,pred)
 }
-Map<String,Map<String,List<String>>> getEditedMbrMap (DataGrid grid, boolean log=false) {
+Map<String,List<Map<String,List<String>>>> getEditedMbrMap (DataGrid grid, boolean log=false) {
 	return getGridMbrMap(grid,log,{DataCell cell -> cell.edited})
 }
 
 
-DataGridDefinition getGridDefFromMap(Map gridMap, log=false, Map<String,Boolean> suppress=[:], Cube cube=rule.getCube()){
+DataGridDefinition getGridDefFromMap(Map mapGrid, log=false, Map<String,Boolean> suppress=[:], Cube cube=rule.getCube()){
 	/**
 	* Will build a DataGridDefinition from a supplied map of type Map<String,Map<String,List<String>>>
 	*	where the root map keys are [pov,cols,rows]
-	* @param gridMap : a map object that defines the pov, cols, and rows
+	* @param mapGrid : a map object that defines the pov, cols, and rows
 	* @param log : will log the results to job console
 	* @param cube : a the cube to build the grid definition from
 	* @param suppress : Suppression Options as Map<String,Boolean>, keys are : [suppCols,suppRows,suppRowsNative,suppBlocks]
@@ -234,28 +277,28 @@ DataGridDefinition getGridDefFromMap(Map gridMap, log=false, Map<String,Boolean>
 	bldr.setSuppressMissingRowsNative(suppress["suppRowsNative"])
 	bldr.setSuppressMissingBlocks(suppress["suppBlocks"])
 	// Add POV
-	if (gridMap["pov"] instanceof Map) {
-		bldr.addPov(gridMap["pov"].keySet() as List,gridMap["pov"].values() as List)
-	} else if (gridMap["pov"] instanceof List) {
-		List lstTemp = gridMap["pov"] as List
+	if (mapGrid["pov"] instanceof Map) {
+		bldr.addPov(mapGrid["pov"].keySet() as List,mapGrid["pov"].values() as List)
+	} else if (mapGrid["pov"] instanceof List) {
+		List lstTemp = mapGrid["pov"] as List
 		Map mapTemp = lstTemp[0] as Map
 		bldr.addPov(mapTemp.keySet() as List,mapTemp.values() as List)
 	}
 	// Add Cols
-	if (gridMap["cols"] instanceof Map) {
-		bldr.addColumn(gridMap["cols"].keySet() as List,gridMap["cols"].values() as List)
-	} else if (gridMap["cols"] instanceof List) {
-		List lstTemp = gridMap["cols"] as List
+	if (mapGrid["cols"] instanceof Map) {
+		bldr.addColumn(mapGrid["cols"].keySet() as List,mapGrid["cols"].values() as List)
+	} else if (mapGrid["cols"] instanceof List) {
+		List lstTemp = mapGrid["cols"] as List
 		lstTemp.each { item ->
 			Map mapTemp = item as Map
 			bldr.addColumn(mapTemp.keySet() as List,mapTemp.values() as List)
 		}
 	}
 	// Add Rows
-	if (gridMap["rows"] instanceof Map) {
-		bldr.addRow(gridMap["rows"].keySet() as List,gridMap["rows"].values() as List)
-	} else if (gridMap["rows"] instanceof List) {
-		List lstTemp = gridMap["rows"] as List
+	if (mapGrid["rows"] instanceof Map) {
+		bldr.addRow(mapGrid["rows"].keySet() as List,mapGrid["rows"].values() as List)
+	} else if (mapGrid["rows"] instanceof List) {
+		List lstTemp = mapGrid["rows"] as List
 		lstTemp.each { item ->
 			Map mapTemp = item as Map
 			bldr.addRow(mapTemp.keySet() as List, mapTemp.values() as List)
@@ -281,23 +324,22 @@ DataGridDefinition getGridDefFromMap(Map gridMap, log=false, Map<String,Boolean>
 		dg.rows.each{ row ->
 			println "   Segment : ${row.getMembers().flatten()}"
 		}
-		//println "   ${dg.rows*.getMembers().flatten()}"
 		println '********************** END GRID DEF PRINT **********************'
 	}
 
 	return dg
 }
-DataGridDefinition getGridDefFromMap(Map<String,Map<String,List<String>>> gridMap, Map<String,Boolean> suppress, Cube cube=rule.getCube()){
+DataGridDefinition getGridDefFromMap(Map<String,Map<String,List<String>>> mapGrid, Map<String,Boolean> suppress, Cube cube=rule.getCube()){
 	// Did not provide log param
-	return getGridDefFromMap(gridMap,false,suppress,cube)
+	return getGridDefFromMap(mapGrid,false,suppress,cube)
 }
-DataGridDefinition getGridDefFromMap(Map<String,Map<String,List<String>>> gridMap, Cube cube){
+DataGridDefinition getGridDefFromMap(Map<String,Map<String,List<String>>> mapGrid, Cube cube){
 	//Did not provide log or suppress map params
-	return getGridDefFromMap(gridMap,false,[:],cube)
+	return getGridDefFromMap(mapGrid,false,[:],cube)
 }
-DataGridDefinition getGridDefFromMap(Map<String,Map<String,List<String>>> gridMap, Boolean log, Cube cube){
+DataGridDefinition getGridDefFromMap(Map<String,Map<String,List<String>>> mapGrid, Boolean log, Cube cube){
 	// did not provide suppress map param
-	return getGridDefFromMap(gridMap,log,[:],cube)
+	return getGridDefFromMap(mapGrid,log,[:],cube)
 }
 
 
