@@ -85,6 +85,10 @@ def logGrid (DataGrid grid) {
 
 
 def logPrettyMap(Map root, int level=0){
+	/**
+	* Logs a map in a "pretty" formatted way, can handle nested maps / lists
+	* @param root : a map object to be traversed and logged
+	*/
 	String pfx = " ".multiply(level * 3)
 	//println "$pfx|ROOT : $root"
 	root.each { key, val ->
@@ -113,6 +117,10 @@ def logPrettyMap(Map root, int level=0){
 }
 
 def logPrettyMap(List root, int level=0){
+	/**
+	* Logs a map in a "pretty" formatted way, can handle nested maps / lists, this piece is for a list of maps
+	* @param root : a list of maps object to be traversed and logged
+	*/
 	String pfx = " ".multiply(level * 3)
     root.eachWithIndex{ item, i ->
     	if (item instanceof Map) {
@@ -166,7 +174,7 @@ Map<String,List<Map<String,List<String>>>> getGridMbrMap (DataGrid grid, Boolean
 	Map<String,List<Map<String,List<String>>>> mapGrid = [:]
 	Map mapTemp = [:]
 	List lstTemp = []
-	
+
 	// Get the POV Dimensions of the Grid
 	mapGrid["pov"] = []
 	grid.pov.each { povDims -> mapTemp[povDims.dimName] = []}
@@ -195,14 +203,13 @@ Map<String,List<Map<String,List<String>>>> getGridMbrMap (DataGrid grid, Boolean
 			mapGrid["pov"][0][dim] = lstTemp.unique()
 		}
 		["cols","rows"].each{ context ->
-			Map tempMap = [:]
+			mapTemp = [:]
 			mapGrid[context][0].each {dim, mbr ->
 				// get a map of all the dims/members for the context of this cell
-				tempMap[dim] = cell.getMemberName(dim)
+				mapTemp[dim] = cell.getMemberName(dim)
 			}
-			mapGrid[context] << tempMap
+			mapGrid[context] << mapTemp
 			mapGrid[context] = mapGrid[context].unique()
-			//println "$context : ($iNumOfDims) $tempMap" 
 		}
 	}
 	

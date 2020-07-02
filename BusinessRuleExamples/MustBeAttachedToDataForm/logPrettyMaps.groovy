@@ -13,7 +13,7 @@ try {
 	DataGrid gridForm = operation.getGrid()
 
 	// Get Mbr Map from Data Grid
-	Map<String,Map<String,List<String>>> mapMapList = getEditedMbrMap(gridForm)
+	Map<String,List<Map<String,List<String>>>> mapMapList = getEditedMbrMap(gridForm)
 
 	println "Log a 2 Deep Nested Map with a List"
 	logPrettyMap(mapMapList)
