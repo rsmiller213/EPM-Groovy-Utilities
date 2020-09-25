@@ -5,6 +5,9 @@
 * **********************************************************/
 class Globals{
 	static Boolean debug = false
+    static String connLocalEPM = "EPM_API"
+    static String defImportMode = "REPLACE"
+    static String defExportMode = "STORE_DATA"
 }
 /* **********************************************************
 *
@@ -85,12 +88,7 @@ def logGrid (DataGrid grid) {
 
 
 def logPrettyMap(Map root, int level=0){
-	/**
-	* Logs a map in a "pretty" formatted way, can handle nested maps / lists
-	* @param root : a map object to be traversed and logged
-	*/
 	String pfx = " ".multiply(level * 3)
-	//println "$pfx|ROOT : $root"
 	root.each { key, val ->
 		if (val instanceof Map) {
 			println "$pfx" + "$key : "
@@ -107,20 +105,12 @@ def logPrettyMap(Map root, int level=0){
 						logPrettyMap((Map) mapVal, level+2)
 					}
 				}
-			} else {
-				println "$pfx" + "$key : $val"
-			}
-		} else {
-			println "$pfx" + "$key : $val"
-		}
+			} else { println "$pfx" + "$key : $val" }
+		} else { println "$pfx" + "$key : $val"}
 	}
 }
 
 def logPrettyMap(List root, int level=0){
-	/**
-	* Logs a map in a "pretty" formatted way, can handle nested maps / lists, this piece is for a list of maps
-	* @param root : a list of maps object to be traversed and logged
-	*/
 	String pfx = " ".multiply(level * 3)
     root.eachWithIndex{ item, i ->
     	if (item instanceof Map) {
@@ -163,6 +153,7 @@ Map<String,String> getPOVMap (DataGrid grid, boolean log=false) {
 }
 
 
+
 Map<String,List<Map<String,List<String>>>> getGridMbrMap (DataGrid grid, Boolean log=false, Predicate pred = {true}) {
 	/**
 	* Will iterate through a grid and build a map of all the dimensions / members that fit the predicate (filter)
@@ -170,17 +161,16 @@ Map<String,List<Map<String,List<String>>>> getGridMbrMap (DataGrid grid, Boolean
 	* @param log : will log the results to job console
 	* @return : a map of dimensions / members requested
 	*/
-	// Build Initial Map Object // Vars
+	// Build Initial Map Object
 	Map<String,List<Map<String,List<String>>>> mapGrid = [:]
 	Map mapTemp = [:]
-	List lstTemp = []
-
+    List lstTemp = []
 	// Get the POV Dimensions of the Grid
 	mapGrid["pov"] = []
 	grid.pov.each { povDims -> mapTemp[povDims.dimName] = []}
 	mapGrid["pov"] << mapTemp
 	// Get the Column Dimensions of the Grid
-	mapTemp = [:]
+    mapTemp = [:]
 	mapGrid["cols"] = []
 	grid.columns.each{ columns -> 
 		columns[0].each{ col ->
@@ -203,13 +193,14 @@ Map<String,List<Map<String,List<String>>>> getGridMbrMap (DataGrid grid, Boolean
 			mapGrid["pov"][0][dim] = lstTemp.unique()
 		}
 		["cols","rows"].each{ context ->
-			mapTemp = [:]
+			Map tempMap = [:]
 			mapGrid[context][0].each {dim, mbr ->
 				// get a map of all the dims/members for the context of this cell
-				mapTemp[dim] = cell.getMemberName(dim)
+				tempMap[dim] = cell.getMemberName(dim)
 			}
-			mapGrid[context] << mapTemp
+			mapGrid[context] << tempMap
 			mapGrid[context] = mapGrid[context].unique()
+			//println "$context : ($iNumOfDims) $tempMap" 
 		}
 	}
 	
@@ -366,9 +357,7 @@ List<Member> getStoredMbrs(List<Member> mbrs){
 	List<Member> mbrReturn = []
 	mbrs*.each{ Member mbr ->
 		Map mbrCur = mbr.toMap()
-		if(["never share","store"].contains(mbrCur["Data Storage"])) {
-			mbrReturn << mbr
-		}
+		if(["never share","store"].contains(mbrCur["Data Storage"])) {mbrReturn << mbr}
 	}
 
 	return mbrReturn
@@ -380,15 +369,140 @@ List<Member> getStoredMbrs(List<String> mbrs, Dimension dim){
 	* @param mbrs : a list of strings of member names
 	* @param dim : dimension the list belongs to
 	* @param cube : the cube to build the list from
-	* @return : a list of stored members as string
+	* @return : a list of stored members as members
 	*/
 	List<Member> mbrReturn = []
 	mbrs.each{ mbr ->
 		Member mbrCur = dim.getMember(mbr)
-		if(["never share","store"].contains(mbrCur.toMap()["Data Storage"])) {
-			mbrReturn << mbrCur
-		}
+		if(["never share","store"].contains(mbrCur.toMap()["Data Storage"])) { mbrReturn << mbrCur }
 	}
 
 	return mbrReturn
 }
+
+
+
+/* **********************************************************
+*
+*	API Functions
+*
+* **********************************************************/
+Map apiGet(String url, Connection conn = rule.cube.application.getConnection(Globals.connLocalEPM)){
+	HttpResponse<String> r = conn.get("$url").asString()
+    if(!(200..299).contains(r.status)) {
+    	throwVetoException("Error ($r.status) : $r.statusText")
+    } else {
+    	return ((Map) new JsonSlurper().parseText(r.body))
+    }
+    
+}
+
+
+Map apiExecuteJob(String url, Map mapPayload, boolean runBackground = false, Connection conn = rule.cube.application.getConnection(Globals.connLocalEPM)){
+	
+    def payload = json(mapPayload)
+	
+    println "Executing API Post Request [$url] on connection [${conn.getName()}] with payload :"
+    logPrettyMap(mapPayload)
+
+    HttpResponse<String> r = conn.post("$url").body(payload).asString()
+	if(!(200..299).contains(r.status)) {
+		throwVetoException("Error ($r.status) : $r.statusText")
+	} else {
+    	Map rMap = ((Map) new JsonSlurper().parseText(r.body))
+		if (runBackground){
+			println "Running Job [${(String)rMap["jobId"]}] in background with current status : ${(String)rMap["jobStatus"]}"
+		} else {
+			String jobId = (String)rMap["jobId"]
+			int rStatus = (int)rMap["status"]
+            HttpResponse<String> rNew
+            Map rMapNew
+			for(long delay = 50; rStatus == -1; delay = Math.min(1000, delay * 2)) {
+				sleep(delay)
+				//rNew = conn.get("$url/$jobId").asString()
+                //rMapNew = ((Map) new JsonSlurper().parseText(rNew.body))
+				rMapNew = apiGet("$url/$jobId")
+                rStatus = (int)rMapNew["status"]
+			}
+        	//println "Job [$jobId] ${(String)rMapNew["jobStatus"]} with exit code $rStatus"
+            return ["status":rStatus,"jobStatus":(String)rMapNew["jobStatus"],"jobId":jobId]
+		}
+	}
+}
+
+
+String apiGetVersion(String connType, Connection conn = rule.cube.application.getConnection(Globals.connLocalEPM)){
+    String ver
+	Map rMap
+    
+    // Get URL String Versions
+	switch(connType){
+    	case "PLN":
+			rMap = apiGet("/HyperionPlanning/rest")
+			rMap["items"].each{ item ->
+				if (item["isLatest"]) {ver = item["version"]}
+			}
+            break;
+		case "DM":
+            rMap = apiGet("/aif/rest")
+			if (rMap["isLatest"]) {ver = rMap["version"]}
+			break;
+        case "MIG":
+            rMap = apiGet("/interop/rest")
+			rMap["items"].each{ item ->
+				if (item["latest"]) {ver = item["version"]}
+			}
+            break;
+    }
+    return ver
+}
+
+
+String apiGetBaseURL(String connType, Connection conn = rule.cube.application.getConnection(Globals.connLocalEPM)) {
+	// Get Version
+	String ver = apiGetVersion(connType, conn)
+    
+    switch(connType){
+    	case "PLN":
+        	return "/HyperionPlanning/rest/$ver"
+            break;
+		case "DM":
+        	return "/aif/rest/$ver"
+            break;
+		case "MIG":
+        	return "/interop/rest/$ver"
+            break;
+    }
+}
+
+
+Map apiGetBaseURLs(Connection conn = rule.cube.application.getConnection(Globals.connLocalEPM)) {
+    Map res = [:]
+    
+    ["PLN","DM","MIG"].each{connType ->
+        res[connType] = apiGetBaseURL(connType, conn)
+    }
+    return res   
+}
+
+
+String apiGetAppFromConn(Connection conn = rule.cube.application.getConnection(Globals.connLocalEPM)){
+
+	Map rMap = apiGet("${apiGetBaseURL("PLN")}/applications")
+    String ret = rMap["items"]["name"]
+    return ret.substring(1, ret.size()-1)
+}
+
+
+
+
+Map apiExecuteDM(Map payload, boolean runBackground = false, Connection conn = rule.cube.application.getConnection(Globals.connLocalEPM)){
+	if(!payload["endPeriod"]) {payload["endPeriod"] = payload["startPeriod"]}
+    if(!payload["importMode"]) {payload["importMode"] = Globals.defImportMode}
+    if(!payload["exportMode"]) {payload["exportMode"] = Globals.defExportMode}
+    Map ret = apiExecuteJob("${apiGetBaseURL("DM")}/jobs", payload, runBackground, conn)
+    println "${(String)ret["jobStatus"]} : Data Load [${(String)payload["jobName"]}] executed as job [${(String)ret["jobId"]}]"
+    return ret
+}
+
+
