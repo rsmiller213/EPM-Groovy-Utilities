@@ -14,7 +14,7 @@ class Globals{
 *	Logging Functions
 *
 * **********************************************************/
-def logTimer (long timeStart, String msg="Time Elapsed"){
+def epmLogTimer (long timeStart, String msg="Time Elapsed"){
 	/**
 	* Prints the time elapsed to job console between a provided start time and now formatted as hh:mm:ss.SSS
 	* @param timeStart : The Starting Time
@@ -29,7 +29,7 @@ def logTimer (long timeStart, String msg="Time Elapsed"){
 }
 
 
-def logUser () {
+def epmLogUser () {
 	/**
 	* Prints the User Running this Script to the job console
 	*/
@@ -37,7 +37,7 @@ def logUser () {
 }
 
 
-def logRTPS () {
+def epmLogRTPS () {
 	/**
 	* Prints the RTPS to the job console
 	*/
@@ -47,7 +47,7 @@ def logRTPS () {
 }
 
 
-def logGrid (DataGrid grid) {
+def epmLogGrid (DataGrid grid) {
 	/**
 	* Logs the entire DataGrid to the job console in a format to be copied/pasted into SmartView
 	* @param grid : a DataGrid object that will be used
@@ -87,22 +87,22 @@ def logGrid (DataGrid grid) {
 }
 
 
-def logPrettyMap(Map root, int level=0){
+def epmLogPrettyMap(Map root, int level=0){
 	String pfx = " ".multiply(level * 3)
 	root.each { key, val ->
 		if (val instanceof Map) {
 			println "$pfx" + "$key : "
-			logPrettyMap((Map) val, level+1)
+			epmLogPrettyMap((Map) val, level+1)
 		} else if (val instanceof List) {
 			List temp = val as List
 			if(temp[0] instanceof Map) {
 				println "$pfx" + "$key : "
 				if (temp.size() == 1) {
-					logPrettyMap((Map) temp[0], level+1)
+					epmLogPrettyMap((Map) temp[0], level+1)
 				} else {
 					temp.eachWithIndex{ mapVal, i ->
 						println "$pfx   " + "Segment ${i+1} :"
-						logPrettyMap((Map) mapVal, level+2)
+						epmLogPrettyMap((Map) mapVal, level+2)
 					}
 				}
 			} else { println "$pfx" + "$key : $val" }
@@ -110,12 +110,12 @@ def logPrettyMap(Map root, int level=0){
 	}
 }
 
-def logPrettyMap(List root, int level=0){
+def epmLogPrettyMap(List root, int level=0){
 	String pfx = " ".multiply(level * 3)
     root.eachWithIndex{ item, i ->
     	if (item instanceof Map) {
         	println "$pfx" + "Item ${i+1}"
-        	logPrettyMap((Map) item, level+1)
+        	epmLogPrettyMap((Map) item, level+1)
         }
     }
 }
@@ -127,7 +127,7 @@ def logPrettyMap(List root, int level=0){
 *	Data Grid Functions
 *
 * **********************************************************/
-Map<String,String> getPOVMap (DataGrid grid, boolean log=false) {
+Map<String,String> epmGetPOVMap (DataGrid grid, boolean log=false) {
 	/**
 	* Will parse a data grid to get the POV Dimension / Members
 	* @param grid : a DataGrid object that will be used to grab the POV from
@@ -154,7 +154,7 @@ Map<String,String> getPOVMap (DataGrid grid, boolean log=false) {
 
 
 
-Map<String,List<Map<String,List<String>>>> getGridMbrMap (DataGrid grid, Boolean log=false, Predicate pred = {true}) {
+Map<String,List<Map<String,List<String>>>> epmGetGridMbrMap (DataGrid grid, Boolean log=false, Predicate pred = {true}) {
 	/**
 	* Will iterate through a grid and build a map of all the dimensions / members that fit the predicate (filter)
 	* @param grid : a DataGrid object that will be used to grab the edited cells from
@@ -238,21 +238,21 @@ Map<String,List<Map<String,List<String>>>> getGridMbrMap (DataGrid grid, Boolean
 		println '********************** BEGIN GRID DIM PRINT **********************'
 		println "Logger : $log | Debug : ${Globals.debug}"
 		println 'Unique Cell Members : '
-		logPrettyMap(mapGrid,1)
+		epmLogPrettyMap(mapGrid,1)
 		println '********************** END GRID DIM PRINT **********************'
 	}
 
 	return mapGrid
 }
-Map<String,List<Map<String,List<String>>>> getGridMbrMap (DataGrid grid, Predicate pred) {
-	return getGridMbrMap(grid,false,pred)
+Map<String,List<Map<String,List<String>>>> epmGetGridMbrMap (DataGrid grid, Predicate pred) {
+	return epmGetGridMbrMap(grid,false,pred)
 }
-Map<String,List<Map<String,List<String>>>> getEditedMbrMap (DataGrid grid, boolean log=false) {
-	return getGridMbrMap(grid,log,{DataCell cell -> cell.edited})
+Map<String,List<Map<String,List<String>>>> epmGetEditedMbrMap (DataGrid grid, boolean log=false) {
+	return epmGetGridMbrMap(grid,log,{DataCell cell -> cell.edited})
 }
 
 
-DataGridDefinition getGridDefFromMap(Map mapGrid, log=false, Map<String,Boolean> suppress=[:], Cube cube=rule.getCube()){
+DataGridDefinition epmGetGridDefFromMap(Map mapGrid, log=false, Map<String,Boolean> suppress=[:], Cube cube=rule.getCube()){
 	/**
 	* Will build a DataGridDefinition from a supplied map of type Map<String,Map<String,List<String>>>
 	*	where the root map keys are [pov,cols,rows]
@@ -328,17 +328,17 @@ DataGridDefinition getGridDefFromMap(Map mapGrid, log=false, Map<String,Boolean>
 
 	return dg
 }
-DataGridDefinition getGridDefFromMap(Map<String,Map<String,List<String>>> mapGrid, Map<String,Boolean> suppress, Cube cube=rule.getCube()){
+DataGridDefinition epmGetGridDefFromMap(Map<String,Map<String,List<String>>> mapGrid, Map<String,Boolean> suppress, Cube cube=rule.getCube()){
 	// Did not provide log param
-	return getGridDefFromMap(mapGrid,false,suppress,cube)
+	return epmGetGridDefFromMap(mapGrid,false,suppress,cube)
 }
-DataGridDefinition getGridDefFromMap(Map<String,Map<String,List<String>>> mapGrid, Cube cube){
+DataGridDefinition epmGetGridDefFromMap(Map<String,Map<String,List<String>>> mapGrid, Cube cube){
 	//Did not provide log or suppress map params
-	return getGridDefFromMap(mapGrid,false,[:],cube)
+	return epmGetGridDefFromMap(mapGrid,false,[:],cube)
 }
-DataGridDefinition getGridDefFromMap(Map<String,Map<String,List<String>>> mapGrid, Boolean log, Cube cube){
+DataGridDefinition epmGetGridDefFromMap(Map<String,Map<String,List<String>>> mapGrid, Boolean log, Cube cube){
 	// did not provide suppress map param
-	return getGridDefFromMap(mapGrid,log,[:],cube)
+	return epmGetGridDefFromMap(mapGrid,log,[:],cube)
 }
 
 
@@ -348,7 +348,7 @@ DataGridDefinition getGridDefFromMap(Map<String,Map<String,List<String>>> mapGri
 *	Metadata Functions
 *
 * **********************************************************/
-List<Member> getStoredMbrs(List<Member> mbrs){
+List<Member> epmGetStoredMbrs(List<Member> mbrs){
 	/**
 	* Will iterate through a list and return only the stored members
 	* @param mbrs : a list of of level zero members
@@ -363,7 +363,7 @@ List<Member> getStoredMbrs(List<Member> mbrs){
 	return mbrReturn
 }
 
-List<Member> getStoredMbrs(List<String> mbrs, Dimension dim){
+List<Member> epmGetStoredMbrs(List<String> mbrs, Dimension dim){
 	/**
 	* Will iterate through a list of Member Names and return only the stored members
 	* @param mbrs : a list of strings of member names
@@ -380,6 +380,40 @@ List<Member> getStoredMbrs(List<String> mbrs, Dimension dim){
 	return mbrReturn
 }
 
+/* **********************************************************
+*
+*	MDX Functions
+*
+* **********************************************************/
+
+String epmConvertMDXFunctions(String mdx){
+
+	def matches
+	// Matches anything like '[*Descendants(*)]'
+	def pDescendants = "(?i)\\[\\w*Descendants\\((.*?)\\)\\]"
+	matches = (mdx =~ "$pDescendants").findAll()
+
+	//TODO : Add other functions
+
+	matches.each{ fnc, mbr ->
+		String result
+		switch (fnc){
+			case ~"(?i)\\[IDescendants.*" :
+				result = "{Descendants([$mbr],SELF)}"
+				break
+			case ~"(?i)\\[ILvl0Descendants.*" :
+				result = "{Descendants([$mbr],[$mbr].dimension.levels(0))}"
+				break
+			case ~"(?i)\\[Descendants.*" :
+				result = "{Descendants([$mbr])}"
+				break
+			default:
+				result = fnc
+		}
+		mdx = mdx.replace((String)fnc,result)
+	}
+	return mdx
+}
 
 
 /* **********************************************************
@@ -387,23 +421,158 @@ List<Member> getStoredMbrs(List<String> mbrs, Dimension dim){
 *	API Functions
 *
 * **********************************************************/
-Map apiGet(String url, Connection conn = rule.cube.application.getConnection(Globals.connLocalEPM)){
-	HttpResponse<String> r = conn.get("$url").asString()
-    if(!(200..299).contains(r.status)) {
-    	throwVetoException("Error ($r.status) : $r.statusText")
-    } else {
-    	return ((Map) new JsonSlurper().parseText(r.body))
+
+class API {
+	String connName
+	Connection conn
+    EpmScript script
+    Application app
+    Map<String,String> baseURLs
+    
+    // Constructor
+    API(EpmScript script){
+    	this.script = script
+    	this.app = this.script.rule.cube.application
+    	this.connName = Globals.connLocalEPM
+        this.conn = this.app.getConnection(connName)
+        this.baseURLs = this.getBaseURLs()
+    }
+    API(EpmScript script, Connection conn){
+    	this.script = script
+        this.conn = conn
+        this.connName = this.conn.getName()
+        this.baseURLs = this.getBaseURLs()
+    }
+    API(EpmScript script, String connName){
+    	this.script = script
+        this.connName = connName
+        this.app = this.script.rule.cube.application
+        this.conn = this.app.getConnection(connName)
+        this.baseURLs = this.getBaseURLs()
     }
     
+    // Methods
+    Map get(String url){
+    	HttpResponse<String> r = conn.get("$url").asString()
+        if(!(200..299).contains(r.status)) {
+        	script.throwVetoException("Error ($r.status) : $r.statusText")
+    	} else {
+    		return ((Map) new JsonSlurper().parseText(r.body))
+    	}
+    }
+    
+    String getVersion(String connType){
+    	String ver
+		Map rMap
+    
+    	// Get URL String Versions
+		switch(connType){
+    		case "PLN":
+				rMap = get("/HyperionPlanning/rest")
+				rMap["items"].each{ item ->
+					if (item["isLatest"]) {ver = item["version"]}
+				}
+            	break;
+			case "DM":
+            	rMap = get("/aif/rest")
+				if (rMap["isLatest"]) {ver = rMap["version"]}
+				break;
+        	case "MIG":
+            	rMap = get("/interop/rest")
+				rMap["items"].each{ item ->
+					if (item["latest"]) {ver = item["version"]}
+				}
+            	break;
+    	}
+    	return ver
+	}
+    
+    String getBaseURL(String connType) {
+		// Get Version
+		String ver = getVersion(connType)
+    
+    	switch(connType){
+    		case "PLN":
+     		   	return "/HyperionPlanning/rest/$ver"
+     	       	break;
+			case "DM":
+        		return "/aif/rest/$ver"
+            	break;
+			case "MIG":
+        		return "/interop/rest/$ver"
+            	break;
+    	}
+	}
+    
+    Map<String,String> getBaseURLs() {
+    	Map res = [:]
+    
+    	["PLN","DM","MIG"].each{connType ->
+        	res[connType] = getBaseURL(connType)
+    	}
+    	return res   
+	}
+    
+    Map executeJob(String url, Map mapPayload, boolean runBackground){
+	
+    	def payload = script.json(mapPayload)
+	
+    	script.println "Executing API Post Request [$url] on connection [${conn.getName()}] with payload : "
+        mapPayload.each{key, val ->
+        	script.println "   $key = $val"
+        }
+
+    	HttpResponse<String> r = conn.post("$url").body(payload).asString()
+		if(!(200..299).contains(r.status)) {
+			script.throwVetoException("Error ($r.status) : $r.statusText")
+		} else {
+    		Map rMap = ((Map) new JsonSlurper().parseText(r.body))
+			if (runBackground){
+				script.println "Running Job [${(String)rMap["jobId"]}] in background with current status : ${(String)rMap["jobStatus"]}"
+			} else {
+				String jobId = (String)rMap["jobId"]
+				int rStatus = (int)rMap["status"]
+            	HttpResponse<String> rNew
+            	Map rMapNew
+				for(long delay = 50; rStatus == -1; delay = Math.min(1000, delay * 2)) {
+					sleep(delay)
+					rMapNew = get("$url/$jobId")
+                	rStatus = (int)rMapNew["status"]
+				}
+            	return ["status":rStatus,"jobStatus":(String)rMapNew["jobStatus"],"jobId":jobId]
+			}
+		}
+	}
+    Map executeJob(String url, Map mapPayload){
+    	return executeJob(url,mapPayload,false)
+    }
+    
+    Map executeDM(Map payload, boolean runBackground){
+		if(!payload["endPeriod"]) {payload["endPeriod"] = payload["startPeriod"]}
+    	if(!payload["importMode"]) { payload["importMode"] = Globals.defImportMode }
+    	if(!payload["exportMode"]) { payload["exportMode"] = Globals.defExportMode }
+    	Map ret = executeJob("${baseURLs.DM}/jobs", payload, runBackground)
+    	script.println "${(String)ret["jobStatus"]} : Data Load [${(String)payload["jobName"]}] executed as job [${(String)ret["jobId"]}]"
+    	return ret
+	}
+    Map executeDM(Map payload){
+    	return executeDM(payload,false)
+    }
+    
+    String sayHello(String m){
+    	script.println "Hello $m"
+    	return "Hello $m!"
+    }
 }
 
 
+/*
 Map apiExecuteJob(String url, Map mapPayload, boolean runBackground = false, Connection conn = rule.cube.application.getConnection(Globals.connLocalEPM)){
 	
     def payload = json(mapPayload)
 	
     println "Executing API Post Request [$url] on connection [${conn.getName()}] with payload :"
-    logPrettyMap(mapPayload)
+    epmLogPrettyMap(mapPayload)
 
     HttpResponse<String> r = conn.post("$url").body(payload).asString()
 	if(!(200..299).contains(r.status)) {
@@ -431,71 +600,6 @@ Map apiExecuteJob(String url, Map mapPayload, boolean runBackground = false, Con
 }
 
 
-String apiGetVersion(String connType, Connection conn = rule.cube.application.getConnection(Globals.connLocalEPM)){
-    String ver
-	Map rMap
-    
-    // Get URL String Versions
-	switch(connType){
-    	case "PLN":
-			rMap = apiGet("/HyperionPlanning/rest")
-			rMap["items"].each{ item ->
-				if (item["isLatest"]) {ver = item["version"]}
-			}
-            break;
-		case "DM":
-            rMap = apiGet("/aif/rest")
-			if (rMap["isLatest"]) {ver = rMap["version"]}
-			break;
-        case "MIG":
-            rMap = apiGet("/interop/rest")
-			rMap["items"].each{ item ->
-				if (item["latest"]) {ver = item["version"]}
-			}
-            break;
-    }
-    return ver
-}
-
-
-String apiGetBaseURL(String connType, Connection conn = rule.cube.application.getConnection(Globals.connLocalEPM)) {
-	// Get Version
-	String ver = apiGetVersion(connType, conn)
-    
-    switch(connType){
-    	case "PLN":
-        	return "/HyperionPlanning/rest/$ver"
-            break;
-		case "DM":
-        	return "/aif/rest/$ver"
-            break;
-		case "MIG":
-        	return "/interop/rest/$ver"
-            break;
-    }
-}
-
-
-Map apiGetBaseURLs(Connection conn = rule.cube.application.getConnection(Globals.connLocalEPM)) {
-    Map res = [:]
-    
-    ["PLN","DM","MIG"].each{connType ->
-        res[connType] = apiGetBaseURL(connType, conn)
-    }
-    return res   
-}
-
-
-String apiGetAppFromConn(Connection conn = rule.cube.application.getConnection(Globals.connLocalEPM)){
-
-	Map rMap = apiGet("${apiGetBaseURL("PLN")}/applications")
-    String ret = rMap["items"]["name"]
-    return ret.substring(1, ret.size()-1)
-}
-
-
-
-
 Map apiExecuteDM(Map payload, boolean runBackground = false, Connection conn = rule.cube.application.getConnection(Globals.connLocalEPM)){
 	if(!payload["endPeriod"]) {payload["endPeriod"] = payload["startPeriod"]}
     if(!payload["importMode"]) {payload["importMode"] = Globals.defImportMode}
@@ -504,5 +608,4 @@ Map apiExecuteDM(Map payload, boolean runBackground = false, Connection conn = r
     println "${(String)ret["jobStatus"]} : Data Load [${(String)payload["jobName"]}] executed as job [${(String)ret["jobId"]}]"
     return ret
 }
-
-
+*/
