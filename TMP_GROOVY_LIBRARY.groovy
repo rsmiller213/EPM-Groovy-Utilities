@@ -14,7 +14,7 @@ class Globals{
 *    Logging Functions
 *
 * **********************************************************/
-def epmLogTimer (long timeStart, String msg="Time Elapsed"){
+def logTimer (long timeStart, String msg="Time Elapsed"){
     /**
     * Prints the time elapsed to job console between a provided start time and now formatted as hh:mm:ss.SSS
     * @param timeStart : The Starting Time
@@ -28,14 +28,14 @@ def epmLogTimer (long timeStart, String msg="Time Elapsed"){
     println "$msg : ${String.format("%02d:%02d:%02d.%03d", h,m,s,ms)}"
 }
 
-def epmLogUser () {
+def logUser () {
     /**
     * Prints the User Running this Script to the job console
     */
     println "Executing User : ${operation.user.fullName}"
 }
 
-def epmLogRTPS () {
+def logRTPS () {
     /**
     * Prints the RTPS to the job console
     */
@@ -44,7 +44,7 @@ def epmLogRTPS () {
     println '********************** END RTP PRINT **********************'
 }
 
-def epmLogGrid (DataGrid grid) {
+def logGrid (DataGrid grid) {
     /**
     * Logs the entire DataGrid to the job console in a format to be copied/pasted into SmartView
     * @param grid : a DataGrid object that will be used
@@ -83,22 +83,22 @@ def epmLogGrid (DataGrid grid) {
 
 }
 
-def epmLogPrettyMap(Map root, int level=0){
+def logPrettyMap(Map root, int level=0){
     String pfx = " ".multiply(level * 3)
     root.each { key, val ->
         if (val instanceof Map) {
             println "$pfx" + "$key : "
-            epmLogPrettyMap((Map) val, level+1)
+            logPrettyMap((Map) val, level+1)
         } else if (val instanceof List) {
             List temp = val as List
             if(temp[0] instanceof Map) {
                 println "$pfx" + "$key : "
                 if (temp.size() == 1) {
-                    epmLogPrettyMap((Map) temp[0], level+1)
+                    logPrettyMap((Map) temp[0], level+1)
                 } else {
                     temp.eachWithIndex{ mapVal, i ->
                         println "$pfx   " + "Segment ${i+1} :"
-                        epmLogPrettyMap((Map) mapVal, level+2)
+                        logPrettyMap((Map) mapVal, level+2)
                     }
                 }
             } else { println "$pfx" + "$key : $val" }
@@ -106,12 +106,12 @@ def epmLogPrettyMap(Map root, int level=0){
     }
 }
 
-def epmLogPrettyMap(List root, int level=0){
+def logPrettyMap(List root, int level=0){
     String pfx = " ".multiply(level * 3)
     root.eachWithIndex{ item, i ->
         if (item instanceof Map) {
             println "$pfx" + "Item ${i+1}"
-            epmLogPrettyMap((Map) item, level+1)
+            logPrettyMap((Map) item, level+1)
         }
     }
 }
@@ -121,7 +121,7 @@ def epmLogPrettyMap(List root, int level=0){
 *    Data Grid Functions
 *
 * **********************************************************/
-Map<String,String> epmGetPOVMap (DataGrid grid, boolean log=false) {
+Map<String,String> getPOVMap (DataGrid grid, boolean log=false) {
     /**
     * Will parse a data grid to get the POV Dimension / Members
     * @param grid : a DataGrid object that will be used to grab the POV from
@@ -146,7 +146,7 @@ Map<String,String> epmGetPOVMap (DataGrid grid, boolean log=false) {
     return mapPOV
 }
 
-Map<String,List<Map<String,List<String>>>> epmGetGridMbrMap (DataGrid grid,
+Map<String,List<Map<String,List<String>>>> getGridMbrMap (DataGrid grid,
                                                             Boolean log=false,
                                                             Predicate pred = {true})
 {
@@ -233,20 +233,20 @@ Map<String,List<Map<String,List<String>>>> epmGetGridMbrMap (DataGrid grid,
         println '********************** BEGIN GRID DIM PRINT **********************'
         println "Logger : $log | Debug : ${Globals.debug}"
         println 'Unique Cell Members : '
-        epmLogPrettyMap(mapGrid,1)
+        logPrettyMap(mapGrid,1)
         println '********************** END GRID DIM PRINT **********************'
     }
 
     return mapGrid
 }
-Map<String,List<Map<String,List<String>>>> epmGetGridMbrMap (DataGrid grid, Predicate pred) {
-    return epmGetGridMbrMap(grid,false,pred)
+Map<String,List<Map<String,List<String>>>> getGridMbrMap (DataGrid grid, Predicate pred) {
+    return getGridMbrMap(grid,false,pred)
 }
-Map<String,List<Map<String,List<String>>>> epmGetEditedMbrMap (DataGrid grid, boolean log=false) {
-    return epmGetGridMbrMap(grid,log,{DataCell cell -> cell.edited})
+Map<String,List<Map<String,List<String>>>> getEditedMbrMap (DataGrid grid, boolean log=false) {
+    return getGridMbrMap(grid,log,{DataCell cell -> cell.edited})
 }
 
-DataGridDefinition epmGetGridDefFromMap(Map mapGrid, log=false,
+DataGridDefinition getGridDefFromMap(Map mapGrid, log=false,
                                         Map<String,Boolean> suppress=[:],
                                         Cube cube=rule.getCube())
 {
@@ -262,10 +262,10 @@ DataGridDefinition epmGetGridDefFromMap(Map mapGrid, log=false,
     */
 
     // Check Params
-    if(!suppress["suppCols"]) {suppress["suppCols"] = false}
-    if(!suppress["suppRows"]) {suppress["suppRows"] = false}
-    if(!suppress["suppRowsNative"]) {suppress["suppRowsNative"] = false}
-    if(!suppress["suppBlocks"]) {suppress["suppBlocks"] = false}
+    if(!suppress["suppCols"]) {suppress["suppCols"] = true}
+    if(!suppress["suppRows"]) {suppress["suppRows"] = faltruese}
+    if(!suppress["suppRowsNative"]) {suppress["suppRowsNative"] = true}
+    if(!suppress["suppBlocks"]) {suppress["suppBlocks"] = true}
 
     DataGridDefinitionBuilder bldr = cube.dataGridDefinitionBuilder()
     bldr.setSuppressMissingColumns(suppress["suppCols"])
@@ -325,20 +325,20 @@ DataGridDefinition epmGetGridDefFromMap(Map mapGrid, log=false,
 
     return dg
 }
-DataGridDefinition epmGetGridDefFromMap(Map<String,Map<String,List<String>>> mapGrid,
+DataGridDefinition getGridDefFromMap(Map<String,Map<String,List<String>>> mapGrid,
                                         Map<String,Boolean> suppress,
                                         Cube cube=rule.getCube())
 {
     // Did not provide log param
-    return epmGetGridDefFromMap(mapGrid,false,suppress,cube)
+    return getGridDefFromMap(mapGrid,false,suppress,cube)
 }
-DataGridDefinition epmGetGridDefFromMap(Map<String,Map<String,List<String>>> mapGrid, Cube cube){
+DataGridDefinition getGridDefFromMap(Map<String,Map<String,List<String>>> mapGrid, Cube cube){
     //Did not provide log or suppress map params
-    return epmGetGridDefFromMap(mapGrid,false,[:],cube)
+    return getGridDefFromMap(mapGrid,false,[:],cube)
 }
-DataGridDefinition epmGetGridDefFromMap(Map<String,Map<String,List<String>>> mapGrid, Boolean log, Cube cube){
+DataGridDefinition getGridDefFromMap(Map<String,Map<String,List<String>>> mapGrid, Boolean log, Cube cube){
     // did not provide suppress map param
-    return epmGetGridDefFromMap(mapGrid,log,[:],cube)
+    return getGridDefFromMap(mapGrid,log,[:],cube)
 }
 
 /* **********************************************************
@@ -346,22 +346,27 @@ DataGridDefinition epmGetGridDefFromMap(Map<String,Map<String,List<String>>> map
 *    Metadata Functions
 *
 * **********************************************************/
-List<Member> epmGetStoredMbrs(List<Member> mbrs){
-    /**
+List<Member> getStoredMbrs(List<Member> mbrs){
+	/**
     * Will iterate through a list and return only the stored members
     * @param mbrs : a list of of level zero members
     * @return : a list of stored members
     */
     List<Member> mbrReturn = []
-    mbrs*.each{ Member mbr ->
+    List<String> mbrIgnore = ["dynamic calc","shared"]
+    //def sAccounts = mdxParams(app.getDimension('Account').getEvaluatedMembers("Lvl0Descendants(Account)" ,cube).findAll{!ignoreMbrs.contains(it.toMap()["Data Storage".toString()])}*.getName(MemberNameType.ESSBASE_NAME))
+    mbrReturn = mbrs.findAll{!mbrIgnore.contains(it.toMap()["Data Storage".toString()])}
+    /*mbrs*.each{ Member mbr ->
         Map mbrCur = mbr.toMap()
-        if(["never share","store"].contains(mbrCur["Data Storage"])) {mbrReturn << mbr}
-    }
+        if(["never share","store"].contains(mbrCur["Data Storage"])) {
+            mbrReturn << mbr
+        }
+    }*/
 
     return mbrReturn
 }
 
-List<Member> epmGetStoredMbrs(List<String> mbrs, Dimension dim){
+List<Member> getStoredMbrs(List<String> mbrs, Dimension dim){
     /**
     * Will iterate through a list of Member Names and return only the stored members
     * @param mbrs : a list of strings of member names
@@ -384,7 +389,7 @@ List<Member> epmGetStoredMbrs(List<String> mbrs, Dimension dim){
 *
 * **********************************************************/
 
-String epmConvertMDXFunctions(String mdx){
+String convertMDXFunctions(String mdx){
 
     def matches
     // Matches anything like '[*Descendants(*)]'
