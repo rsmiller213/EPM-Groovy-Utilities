@@ -2,7 +2,5 @@
 
 ## To setup :
 
-* Create a Template in Calculation Manager
-* Copy everything in TMP_GROOVY_LIBRARY.groovy
-* Paste into newly created template
-* In business rule, reference newly created template using %Template(name:=<YourTemplateName>)
+* Create a Template in Calculation Manager and copy whatever functions you wish
+* Refer to that template any any business rule (usually at the top) using %Template(name:=<YourTemplateName>)
